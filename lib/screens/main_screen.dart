@@ -1,4 +1,5 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:final_project/screens/bookmark_screen.dart';
 import 'package:final_project/screens/home_screen.dart';
 import 'package:final_project/screens/search_screen.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  List<Widget> screens = [HomeInteractiveScreen(), SearchScreen()];
+  List<Widget> screens = [HomeInteractiveScreen(), SearchScreen(), BookmarkScreen(),];
 
   int selectedIndex = 0;
 
@@ -56,11 +57,11 @@ class _MainScreenState extends State<MainScreen> {
               activeIcon: Icon(Icons.search),
               label: 'Search',
             ),
-            // BottomNavigationBarItem(
-            //   icon: Icon(Icons.bookmark_outline),
-            //   activeIcon: Icon(Icons.bookmark),
-            //   label: 'Bookmark',
-            // ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark_outline),
+              activeIcon: Icon(Icons.bookmark),
+              label: 'Bookmark',
+            ),
             // BottomNavigationBarItem(
             //   icon: Icon(Icons.person_outline),
             //   activeIcon: Icon(Icons.person),
