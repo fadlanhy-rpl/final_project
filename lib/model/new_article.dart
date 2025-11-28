@@ -5,6 +5,7 @@ class NewsArticle {
   final String views;
   final String comments;
   final String imageUrl;
+  final String content;
 
   NewsArticle({
     required this.title,
@@ -13,6 +14,7 @@ class NewsArticle {
     required this.views,
     required this.comments,
     required this.imageUrl,
+    required this.content,
   });
 
   // 1. Fungsi toJson (Packing) 🧳
@@ -25,6 +27,7 @@ class NewsArticle {
       'views': views,
       'comments': comments,
       'imageUrl': imageUrl,
+      'content': content,
     };
   }
 
@@ -39,6 +42,7 @@ class NewsArticle {
       views: json['views'] ?? '0',
       comments: json['comments'] ?? '0',
       imageUrl: json['imageUrl'] ?? '',
+      content: json['content'] ?? '',
     );
   }
 }

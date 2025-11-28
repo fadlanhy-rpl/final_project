@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:final_project/screens/main_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // PENTING: Biar kIsWeb dikenali
+import 'package:flutter/foundation.dart'; 
 import 'package:get/get.dart';
-import 'package:final_project/screens/home_screen.dart';
 import 'package:final_project/screens/login_screen.dart';
+import 'package:final_project/screens/main_screen.dart'; // 1. Pastikan Import MainScreen
 import 'package:google_sign_in/google_sign_in.dart'; 
 
 class AuthController extends GetxController {
@@ -14,23 +13,36 @@ class AuthController extends GetxController {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Rx<User?> firebaseUser = Rx<User?>(null);
+  var userData = <String, dynamic>{}.obs;
+
   User? get user => firebaseUser.value;
 
   @override
   void onReady() {
     super.onReady();
-    // Delay 3 detik buat Splash Screen sebelum cek status login
     Future.delayed(const Duration(seconds: 3), () {
       firebaseUser.bindStream(_auth.authStateChanges());
       ever(firebaseUser, _setInitialScreen);
     });
   }
 
-  _setInitialScreen(User? user) {
+  _setInitialScreen(User? user) async {
     if (user == null) {
       Get.offAll(() => const LoginScreen());
     } else {
-      Get.offAll(() => const MainScreen());
+      try {
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          userData.value = userDoc.data() as Map<String, dynamic>;
+          Get.offAll(() => const MainScreen()); 
+        } else {
+          Get.snackbar("Akses Ditolak", "Akun Anda tidak ditemukan di database.");
+          await logout();
+        }
+      } catch (e) {
+        Get.snackbar("Error", "Gagal memverifikasi akun: $e");
+        Get.offAll(() => const LoginScreen());
+      }
     }
   }
 
@@ -44,12 +56,16 @@ class AuthController extends GetxController {
 
       if (userCredential.user != null) {
         String uid = userCredential.user!.uid;
-        await _firestore.collection('users').doc(uid).set({
+        Map<String, dynamic> newUser = {
           'email': email,
           'username': username,
           'uid': uid,
           'createdAt': DateTime.now().toIso8601String(),
-        });
+          'photoUrl': '',
+          'role': 'user',
+        };
+        await _firestore.collection('users').doc(uid).set(newUser);
+        userData.value = newUser;
       }
       Get.snackbar("Berhasil", "Akun berhasil dibuat! Selamat datang $username", backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
@@ -57,48 +73,47 @@ class AuthController extends GetxController {
     }
   }
 
-  // --- Fungsi Login Email ---
   Future<void> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      // Tambahan Notifikasi Sukses
-      Get.snackbar("Berhasil", "Login berhasil! Selamat datang kembali.", backgroundColor: Colors.green, colorText: Colors.white);
+      Get.snackbar("Berhasil", "Login berhasil!", backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
        Get.snackbar("Error", "Login gagal: $e", backgroundColor: Colors.redAccent, colorText: Colors.white);
     }
   }
 
-  // --- Fungsi Login Google ---
   Future<void> loginWithGoogle() async {
     try {
-      // 1. Trigger flow Google Sign In
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // User batal milih akun
+      if (googleUser == null) return;
 
-      // 2. Ambil token autentikasi
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
-      // 3. Buat kredensial Firebase
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // 4. Masuk ke Firebase
       UserCredential userCredential = await _auth.signInWithCredential(credential);
 
-      // 5. Simpan data user ke Firestore jika user baru
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        String uid = userCredential.user!.uid;
-        await _firestore.collection('users').doc(uid).set({
-          'email': googleUser.email,
-          'username': googleUser.displayName ?? "User Google",
-          'uid': uid,
-          'createdAt': DateTime.now().toIso8601String(),
-          'photoUrl': googleUser.photoUrl,
-        });
+      if (userCredential.user != null) {
+         String uid = userCredential.user!.uid;
+         DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+
+         if (!doc.exists) {
+           Map<String, dynamic> newUser = {
+              'email': googleUser.email,
+              'username': googleUser.displayName ?? "User Google",
+              'uid': uid,
+              'createdAt': DateTime.now().toIso8601String(),
+              'photoUrl': googleUser.photoUrl,
+              'role': 'user',
+           };
+           await _firestore.collection('users').doc(uid).set(newUser);
+           userData.value = newUser;
+         } else {
+           userData.value = doc.data() as Map<String, dynamic>;
+         }
       }
-      // Update Notifikasi Sukses biar lebih cantik
       Get.snackbar("Berhasil", "Login Google sukses!", backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
       print("Error Google: $e");
@@ -106,9 +121,9 @@ class AuthController extends GetxController {
     }
   }
 
-  // --- Fungsi Logout ---
   Future<void> logout() async {
     await _auth.signOut();
-    await _googleSignIn.signOut(); // Pastikan logout dari Google juga
+    await _googleSignIn.signOut();
+    userData.value = {};
   }
 }

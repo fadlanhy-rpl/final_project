@@ -3,27 +3,42 @@ import 'package:get/get.dart';
 import 'package:final_project/controllers/auth_controller.dart';
 import 'package:final_project/screens/register_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Panggil Satpam (Controller)
-    final AuthController authC = Get.find();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
-    final TextEditingController emailC = TextEditingController();
-    final TextEditingController passC = TextEditingController();
+class _LoginScreenState extends State<LoginScreen> {
+  // 1. Controller didefinisikan di sini agar tidak reset saat rebuild
+  final TextEditingController emailC = TextEditingController();
+  final TextEditingController passC = TextEditingController();
+  
+  // 2. Variabel untuk status mata (Terlihat/Tidak)
+  bool _isObscure = true; 
+
+  @override
+  void dispose() {
+    // Bersihkan memori saat layar ditutup
+    emailC.dispose();
+    passC.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AuthController authC = Get.find();
 
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Center( // Center biar konten ada di tengah vertikal
+        child: Center(
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo / Judul
                 const Text(
                   "SkyNews ☁️",
                   textAlign: TextAlign.center,
@@ -37,7 +52,6 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
 
-                // Input Email
                 TextField(
                   controller: emailC,
                   decoration: InputDecoration(
@@ -48,19 +62,33 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Input Password
+                // --- KOLOM PASSWORD DENGAN FITUR MATA ---
                 TextField(
                   controller: passC,
-                  obscureText: true,
+                  obscureText: _isObscure, // Status dari variabel
                   decoration: InputDecoration(
                     labelText: "Password",
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     prefixIcon: const Icon(Icons.lock),
+                    // Tombol Mata di ujung kanan
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isObscure ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        // Ubah status saat ditekan
+                        setState(() {
+                          _isObscure = !_isObscure;
+                        });
+                      },
+                    ),
                   ),
                 ),
+                // ----------------------------------------
+                
                 const SizedBox(height: 24),
 
-                // Tombol Login Biasa
                 ElevatedButton(
                   onPressed: () => authC.login(emailC.text, passC.text),
                   style: ElevatedButton.styleFrom(
@@ -74,7 +102,6 @@ class LoginScreen extends StatelessWidget {
                 const Text("Atau", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 16),
 
-                // --- TOMBOL GOOGLE (BARU) ---
                 OutlinedButton.icon(
                   onPressed: () => authC.loginWithGoogle(),
                   icon: Image.network(
@@ -88,11 +115,9 @@ class LoginScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                // ---------------------------
 
                 const SizedBox(height: 24),
 
-                // Tombol Daftar
                 TextButton(
                   onPressed: () => Get.to(() => const RegisterScreen()),
                   child: const Text("Belum punya akun? Daftar di sini"),

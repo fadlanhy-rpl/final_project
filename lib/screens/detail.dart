@@ -41,8 +41,9 @@ class _DetailScreenState extends State<DetailScreen>
     _setupAnimations();
     _parseDataToModel();
     
-    // Cek status bookmark saat halaman dibuka
-    bookmarkC.checkIfBookmarked(article.title);
+    // PERBAIKAN: Gunakan resetState yang mengambil data dari Cache List (Instan)
+    // Tidak perlu await/loading lagi!
+    bookmarkC.resetState(article.title);
   }
 
   @override
@@ -80,13 +81,53 @@ class _DetailScreenState extends State<DetailScreen>
 
   // Mengubah Map mentah menjadi Object Model agar aman dikirim ke Firebase
   void _parseDataToModel() {
+    final data = widget.newsDetail;
+
+    // 1. Ambil URL Gambar (Cek API vs Bookmark)
+    String image = '';
+    if (data['imageUrl'] != null) {
+      image = data['imageUrl'];
+    } else if (data['image'] != null && data['image']['small'] != null) {
+      image = data['image']['small'];
+    }
+
+    // 2. Ambil Source / Link
+    String source = '';
+    if (data['source'] != null) {
+      source = data['source'];
+    } else if (data['link'] != null) {
+      source = data['link'];
+    }
+
+    // 3. Ambil Waktu
+    String time = '';
+    if (data['timeAgo'] != null) {
+      time = data['timeAgo'];
+    } else if (data['isoDate'] != null) {
+      time = data['isoDate'];
+    }
+
+    // 4. Ambil Konten / Deskripsi (LOGIKA BARU DI SINI)
+    String content = '';
+    if (data['content'] != null) {
+      // Kalau dari Bookmark, kuncinya 'content'
+      content = data['content'];
+    } else if (data['contentSnippet'] != null) {
+      // Kalau dari API, biasanya 'contentSnippet'
+      content = data['contentSnippet'];
+    } else if (data['description'] != null) {
+      // Jaga-jaga kalau API pakai key 'description'
+      content = data['description'];
+    }
+
     article = NewsArticle(
-      title: (widget.newsDetail['title'] ?? '').toString(),
-      source: (widget.newsDetail['link'] ?? '').toString(), // Link as source ID
-      timeAgo: (widget.newsDetail['isoDate'] ?? '').toString(),
-      views: '0', // Dummy data kalau di API gak ada
-      comments: '0',
-      imageUrl: (widget.newsDetail['image']?['small'] ?? '').toString(),
+      title: (data['title'] ?? '').toString(),
+      source: source,
+      timeAgo: time,
+      views: (data['views'] ?? '0').toString(),
+      comments: (data['comments'] ?? '0').toString(),
+      imageUrl: image,
+      content: content, 
     );
   }
 
@@ -229,7 +270,7 @@ class _DetailScreenState extends State<DetailScreen>
   }
 
   Widget _buildContentBody(BuildContext context) {
-    final content = (widget.newsDetail['contentSnippet'] ?? '').toString();
+    final content = article.content;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return FadeTransition(

@@ -1,75 +1,101 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:final_project/model/new_article.dart'; // Pastikan path import ini benar
+import 'package:final_project/model/new_article.dart';
 
 class BookmarkController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Variabel .obs (Reaktif) untuk memantau status bookmark
-  // Kalau true = ikon nyala (disimpan), false = ikon mati
+  // 1. STATE MANAGEMENT
+  // Variabel UI untuk satu artikel yang sedang dibuka
   var isBookmarked = false.obs;
+  
+  // 2. LOCAL CACHE (Daftar Belanja) 🛒
+  // Menyimpan semua JUDUL berita yang dibookmark.
+  // Pengecekan dilakukan ke list ini, bukan tembak ke server terus-menerus.
+  var bookmarkedIds = <String>[].obs;
 
-  // --- Fungsi 1: Tambah ke Laci (Save) ---
+  @override
+  void onInit() {
+    super.onInit();
+    // Saat Controller lahir, langsung ambil semua daftar belanjaan (1x Read)
+    _loadAllBookmarks();
+  }
+
+  // --- Fungsi Internal: Ambil Semua Data (Initial Fetch) ---
+  Future<void> _loadAllBookmarks() async {
+    try {
+      String uid = _auth.currentUser?.uid ?? '';
+      if (uid.isEmpty) return;
+
+      // Ambil semua dokumen di koleksi bookmark (Cost: 1 Read per dokumen saat pertama kali)
+      // Tapi karena kita pakai listener (snapshots), data akan selalu sinkron otomatis!
+      _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('bookmarks')
+          .snapshots()
+          .listen((snapshot) {
+        
+        // Update Local Cache kita dengan daftar ID terbaru
+        bookmarkedIds.value = snapshot.docs.map((doc) => doc.id).toList();
+        print("📦 Local Cache Updated: ${bookmarkedIds.length} items");
+        
+      });
+    } catch (e) {
+      print("Error loading bookmarks: $e");
+    }
+  }
+
+  // --- Fungsi 1: Reset UI (Membersihkan Meja) ---
+  // Dipanggil dari UI saat DetailScreen baru dibuka
+  void resetState(String title) {
+    // Cek instan dari Local Cache (GRATIS & CEPAT) ⚡
+    isBookmarked.value = bookmarkedIds.contains(title);
+  }
+
+  // --- Fungsi 2: Tambah ke Laci (Save) ---
   Future<void> addToBookmark(NewsArticle article) async {
     try {
-      String uid = _auth.currentUser!.uid; // Ambil ID user yang login
+      String uid = _auth.currentUser!.uid;
       
-      // Kita simpan di: users -> [UID] -> bookmarks -> [Judul Berita]
+      // Optimistic Update: Ubah UI dulu biar terasa cepat
+      isBookmarked.value = true; 
+
       await _firestore
           .collection('users')
           .doc(uid)
           .collection('bookmarks')
-          .doc(article.title) // Gunakan Judul sebagai ID Dokumen
-          .set(article.toJson()); // Ubah objek jadi JSON
+          .doc(article.title)
+          .set(article.toJson()); // Kita simpan FULL DATA (Aman jika API mati)
 
-      isBookmarked.value = true; // Ubah status jadi tersimpan
-      Get.snackbar("Disimpan", "Berita berhasil masuk daftar bacaan!");
-      
+      Get.snackbar("Disimpan", "Berita masuk daftar bacaan", duration: const Duration(seconds: 1));
     } catch (e) {
-      Get.snackbar("Gagal", "Gagal menyimpan bookmark: $e");
+      isBookmarked.value = false; // Revert jika gagal
+      Get.snackbar("Gagal", "Gagal menyimpan: $e");
     }
   }
 
-  // --- Fungsi 2: Buang dari Laci (Delete) ---
+  // --- Fungsi 3: Hapus (Delete) ---
   Future<void> removeFromBookmark(String title) async {
     try {
       String uid = _auth.currentUser!.uid;
       
+      // Optimistic Update
+      isBookmarked.value = false;
+
       await _firestore
           .collection('users')
           .doc(uid)
           .collection('bookmarks')
-          .doc(title) // Hapus berdasarkan judul
-          .delete();
-          
-      isBookmarked.value = false; // Ubah status jadi tidak tersimpan
-      Get.snackbar("Dihapus", "Berita dihapus dari bookmark.");
-    } catch (e) {
-      Get.snackbar("Error", "Gagal menghapus: $e");
-    }
-  }
-
-  // --- Fungsi 3: Cek Laci (Check Status) ---
-  // Dipanggil setiap kali kita buka halaman detail berita
-  Future<void> checkIfBookmarked(String title) async {
-    try {
-      String uid = _auth.currentUser!.uid;
-      
-      // Coba ambil dokumen dengan judul tersebut
-      var doc = await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('bookmarks')
           .doc(title)
-          .get();
-          
-      // doc.exists akan bernilai true jika dokumennya ada
-      isBookmarked.value = doc.exists; 
+          .delete();
+
+      Get.snackbar("Dihapus", "Berita dihapus", duration: const Duration(seconds: 1));
     } catch (e) {
-      // Kalau error (misal koneksi putus), anggap saja belum di-bookmark
-      isBookmarked.value = false;
+      isBookmarked.value = true; // Revert jika gagal
+      Get.snackbar("Error", "Gagal menghapus: $e");
     }
   }
 }
