@@ -1,5 +1,5 @@
 import 'package:final_project/api/api.dart';
-import 'package:final_project/screens/detail.dart';
+import 'package:final_project/screens/detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_rx/get_rx.dart';
 import 'package:intl/intl.dart';

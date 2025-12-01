@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:final_project/api/api.dart'; // Pastikan import ini benar
-// Hapus import yang tidak berhubungan dengan data
+import 'package:final_project/api/api.dart'; 
 
 class NewsController extends GetxController {
-  // --- 1. STATE MANAGEMENT (Data Mentah) ---
+  // --- 1. STATE (Data) ---
   var allNews = <Map<String, dynamic>>[].obs; 
   var isLoading = false.obs;
   var selectedCategory = ''.obs;
   
-  // State untuk Error Handling (Biar UI yang nentuin cara nampilinnya)
+  // Variabel Error (Koki berteriak di sini)
   var errorMessage = ''.obs;
 
-  // State Tema (Masih oke disimpan di sini karena global, 
-  // tapi idealnya dipisah ke ThemeController sendiri)
+  // Variabel Tema
   final isChange = false.obs; 
 
   // --- 2. COMPUTED DATA (Data Olahan) ---
-  // Getter ini ringan, karena cuma memotong list yang sudah ada di memori
   List<Map<String, dynamic>> get breakingNews => allNews.take(5).toList();
   List<Map<String, dynamic>> get recommendations => allNews.skip(5).toList();
 
@@ -27,15 +24,15 @@ class NewsController extends GetxController {
     fetchNews(); 
   }
 
-  // --- 3. ACTIONS (Fungsi Kerja) ---
+  // --- 3. ACTIONS (Logika) ---
   
   void changeTheme() {
     isChange.value = !isChange.value;
     Get.changeTheme(isChange.value ? ThemeData.dark() : ThemeData.light());
   }
 
+  // Optimasi: Cek kategori sebelum fetch
   void updateCategory(String category) {
-    // Optimasi: Kalau kategori sama, jangan reload data (Hemat Kuota & CPU)
     if (selectedCategory.value == category) return;
     
     selectedCategory.value = category;
@@ -45,11 +42,8 @@ class NewsController extends GetxController {
   Future<void> fetchNews() async {
     try {
       isLoading.value = true;
-      errorMessage.value = ''; // Reset error sebelum mulai
+      errorMessage.value = ''; // Reset teriakan error
       
-      // Simulasi delay biar loading kelihatan (Opsional, hapus di production)
-      // await Future.delayed(Duration(seconds: 1));
-
       final data = await Api().getApi(category: selectedCategory.value);
       
       if (data.isNotEmpty) {
@@ -59,27 +53,15 @@ class NewsController extends GetxController {
       }
 
     } catch (e) {
-      errorMessage.value = "Gagal memuat berita. Periksa koneksi Anda.";
+      // Koki cuma lapor error, gak perlu urus Snackbar
+      errorMessage.value = "Gagal memuat berita. Periksa koneksi internet.";
       print("Error Fetching News: $e");
-      
-      // Opsional: Tetap bisa panggil snackbar dari sini untuk kemudahan, 
-      // tapi idealnya menggunakan 'ever()' di UI untuk mendengarkan perubahan errorMessage.
-      Get.snackbar(
-        "Terjadi Kesalahan", 
-        errorMessage.value,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
     } finally {
       isLoading.value = false;
     }
   }
   
-  // Fungsi Refresh (untuk Pull-to-Refresh di UI)
   Future<void> refreshNews() async {
-    // Paksa fetch ulang walaupun kategori sama
     await fetchNews();
   }
 }

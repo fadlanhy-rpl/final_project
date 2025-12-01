@@ -14,7 +14,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  List<Widget> screens = [HomeInteractiveScreen(), SearchScreen(), BookmarkScreen(),];
+  List<Widget> screens = [HomeScreen(), SearchScreen(), BookmarkScreen(),];
 
   int selectedIndex = 0;
 
