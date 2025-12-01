@@ -5,7 +5,8 @@ import 'firebase_options.dart'; // 2. Import Config Firebase (hasil generate CLI
 
 // Import Screen & Controller
 import 'package:final_project/screens/splash/splash_screen.dart';
-import 'package:final_project/controllers/auth_controller.dart'; // Import Controller Satpam
+import 'package:final_project/controllers/auth_controller.dart'; 
+// Import Controller Satpam
 
 void main() async {
   // 3. Pastikan binding Flutter siap sebelum menjalankan kode async (wajib untuk Firebase)
@@ -33,12 +34,15 @@ class MyApp extends StatelessWidget {
       title: 'SkyNews App',
       debugShowCheckedModeBanner: false,
       
-      // Tema aplikasi (bisa dikembangkan nanti dengan ThemeController)
-      theme: ThemeData.light(),      
-      // darkTheme: ThemeData.dark(),
-
-      // Halaman pertama yang muncul tetap Splash Screen
-      // Nanti AuthController yang akan menentukan setelah Splash mau ke Home atau Login
+      // 1. TEMA TERANG
+      theme: ThemeData.light(), 
+      
+      // 2. TEMA GELAP (Wajib didaftarkan)
+      darkTheme: ThemeData.dark(), 
+      
+      // 3. MODE: Ikuti System dulu, nanti ditimpa sama tombol
+      themeMode: ThemeMode.system, 
+      
       home: const SplashScreen(),
     );
   }

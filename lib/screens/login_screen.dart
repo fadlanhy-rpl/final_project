@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:final_project/controllers/auth_controller.dart';
 import 'package:final_project/screens/register_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,16 +12,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // 1. Controller didefinisikan di sini agar tidak reset saat rebuild
   final TextEditingController emailC = TextEditingController();
   final TextEditingController passC = TextEditingController();
-  
-  // 2. Variabel untuk status mata (Terlihat/Tidak)
-  bool _isObscure = true; 
+
+  bool _isObscure = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
-    // Bersihkan memori saat layar ditutup
     emailC.dispose();
     passC.dispose();
     super.dispose();
@@ -31,99 +30,281 @@ class _LoginScreenState extends State<LoginScreen> {
     final AuthController authC = Get.find();
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  "SkyNews ☁️",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blue),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Masuk untuk membaca berita terkini",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 40),
-
-                TextField(
-                  controller: emailC,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: const Icon(Icons.email),
+      backgroundColor: const Color(0xFFF0F4FA),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              
+              // Title
+              Center(
+                child: Text(
+                  "Log in",
+                  style: GoogleFonts.poppins(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 16),
+              ),
+              const SizedBox(height: 8),
+              
+              // Subtitle
+              Center(
+                child: Text(
+                  "Login to access your account",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
 
-                // --- KOLOM PASSWORD DENGAN FITUR MATA ---
-                TextField(
-                  controller: passC,
-                  obscureText: _isObscure, // Status dari variabel
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    prefixIcon: const Icon(Icons.lock),
-                    // Tombol Mata di ujung kanan
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isObscure ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
+              // Email Label
+              Text(
+                "Email",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Email Input
+              TextField(
+                controller: emailC,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: "Enter your email",
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFE8EFF9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Password Label
+              Text(
+                "Password",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Password Input
+              TextField(
+                controller: passC,
+                obscureText: _isObscure,
+                decoration: InputDecoration(
+                  hintText: "••••••••",
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFE8EFF9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isObscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: Colors.grey[500],
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscure = !_isObscure;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Remember Me & Forgot Password Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value ?? false;
+                            });
+                          },
+                          activeColor: const Color(0xFF2196F3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
                       ),
-                      onPressed: () {
-                        // Ubah status saat ditekan
-                        setState(() {
-                          _isObscure = !_isObscure;
-                        });
-                      },
+                      const SizedBox(width: 8),
+                      Text(
+                        "Remember me",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Forgot password action
+                    },
+                    child: Text(
+                      "Forget password?",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: const Color(0xFF2196F3),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Login Button
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () => authC.login(emailC.text, passC.text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    "Log in",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                // ----------------------------------------
-                
-                const SizedBox(height: 24),
+              ),
+              const SizedBox(height: 24),
 
-                ElevatedButton(
-                  onPressed: () => authC.login(emailC.text, passC.text),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              // Or Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      "Or",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ),
-                  child: const Text("LOGIN", style: TextStyle(fontSize: 16)),
-                ),
-                
-                const SizedBox(height: 16),
-                const Text("Atau", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 16),
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-                OutlinedButton.icon(
-                  onPressed: () => authC.loginWithGoogle(),
-                  icon: Image.network(
-                    'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
-                    height: 24,
+              // Social Login Buttons
+              Row(
+                children: [
+                  // Google Button
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => authC.loginWithGoogle(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey[300]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        backgroundColor: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.network(
+                            'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png',
+                            height: 22,
+                            width: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Google",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  label: const Text("Masuk dengan Google"),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: Colors.grey),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+                  // 
+                ],
+              ),
+              const SizedBox(height: 40),
 
-                const SizedBox(height: 24),
-
-                TextButton(
-                  onPressed: () => Get.to(() => const RegisterScreen()),
-                  child: const Text("Belum punya akun? Daftar di sini"),
+              // Sign Up Link
+              Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Get.to(() => const RegisterScreen()),
+                      child: Text(
+                        "Sign Up",
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF2196F3),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
